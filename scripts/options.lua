@@ -550,6 +550,39 @@ function getDiscountPrice(farmland)
 	end
 	return delta, disct
 end
+
+--------------------- public API for other mods --------------------------------------------------------
+-- Returns farmland discount data for use by external mods (e.g. UsedPlus, FS25_Financing).
+-- Avoids other mods having to access BetterContracts internals directly.
+-- @param farmland  table      farmland object (from g_farmlandManager)
+-- @param farmId    number|nil farm ID, defaults to g_localPlayer.farmId
+-- @return number delta           discount amount (currency)
+-- @return number discountPercent discount as integer (e.g. 15 for 15%)
+-- @return number jobCount        jobs completed for this NPC
+-- @return number maxJobs         max jobs that count toward discount
+function BetterContracts:getFarmlandDiscount(farmland, farmId)
+	if not self.config.discountMode then return 0, 0, 0, 0 end
+	if farmland == nil then return 0, 0, 0, 0 end
+
+	local discPerJob = self.config.discPerJob
+	local discMaxJobs = self.config.discMaxJobs
+	local fId = farmId or g_localPlayer.farmId
+	local farm = g_farmManager:getFarmById(fId)
+	if farm == nil then return 0, 0, 0, 0 end
+
+	local jobs = farm.stats.npcJobs or {}
+	local count = jobs[farmland.npcIndex] or 0
+	local disJobs = math.min(count, discMaxJobs, math.floor(0.5 / discPerJob))
+
+	local delta = 0
+	local discountPercent = 0
+	if disJobs > 0 then
+		delta = farmland.price * disJobs * discPerJob
+		discountPercent = math.floor(100 * disJobs * discPerJob)
+	end
+	return delta, discountPercent, count, discMaxJobs
+end
+
 function showContextBox(box, hotspot, description, image, uvs, farmId, farmText, p27, p28, isFarmBox)
 	-- appended to InGameMenuMapUtil.showContextBox()
 	if box == nil then return end 
