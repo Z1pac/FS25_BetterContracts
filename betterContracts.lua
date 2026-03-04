@@ -62,6 +62,8 @@
 --							allow onion harvest #165. update Ru, Da translation
 --							handle missions w/o leasing vehicles in abstractInit()
 --							fix leasing when BC details is off
+--  v1.3.0.6 	22.02.2026	add getFarmlandDiscount() public API #172
+--							fix getGroups for late registered mod mission types #174
 --=======================================================================================================
 SC = {
 	FERTILIZER = 1, -- prices index
@@ -117,25 +119,31 @@ source(Utils.getFilename("Utility.lua", g_currentModDirectory.."scripts/")) 	-- 
 BetterContracts = RoyalMod.new(true, true)     --params bool debug, bool sync
 
 gEnv = getmetatable(_G).__index
-function addTexts()
+function addTexts(self)
 	for name, value in pairs(g_i18n.texts) do
 		if string.startsWith(name, "global_") then
 			gEnv.g_i18n:setText(name:sub(8), value)
 		end
 	end
+	-- l10n for "no" / "kein"
+	local noFarm = g_i18n:getText("ui_noFarm")  	-- pas de ferme
+	local words = noFarm:split(" ")					
+	local k = noFarm:find(words[#words])			--        ^ 
+	self.noDiscount = noFarm:sub(1,k-1) 			-- pas de
 end
 function checkOtherMods(self)
 	local mods = {	
 		FS25_ContractBoost = "contractBoost",
 		FS25_LimeMission = "limeMission",
 		FS25_MowBaleMission = "mowbaleMission",
+		FS25_SupplyTransportContracts = "supply",
+		FS25_AdditionalContracts = "additional",
+		FS25_woodChipsMission = "woodChips",
 		FS25_RefreshContracts = "refreshContracts",
 		FS25_Financing = "financing",
 		--FS25_MaizePlus = "maizePlus",
 		FS25_KommunalServices = "kommunal",
-		FS25_SupplyTransportContracts = "supply",
 		FS25_extendedMissionInfo = "extendedInfo",
-		FS25_AdditionalContracts = "additional",
 		FS25_ActiveMissionsTime = "activeMissionsTime",
 		}
 	for mod, switch in pairs(mods) do
@@ -503,21 +511,10 @@ function BetterContracts:initialize()
 		weed = 0.9,
 		lime = 0.9
 	}
-	self.genContracts = {}  	-- avoid generation if genContracts[type] is false
-	local types = g_missionManager.missionTypes
-	for i = 1, #types do
-		self.genContracts[g_missionManager:getMissionTypeById(i).name] = true
-	end
-	self.canHarvest = {			-- allow generation if canHarvest[variant] is true
-		GRAIN = true,
-		ROOTCROP = true,
-		VEGETABLES = true,
-		GREEN = true,
-	}  		
 	checkOtherMods(self)
 	registerXML(self) 			-- register xml: self.xmlSchema
 	hookFunctions(self) 		-- appends / overwrites to basegame functions
-	addTexts()  				-- raise i18n texts to global
+	addTexts(self)  			-- raise i18n texts to global
 end
 function BetterContracts:allowHarvest()
 	-- check if fruit on current field is exluded from harvest contracts
@@ -900,9 +897,6 @@ function baleGetDetails(self, superf)
 end
 
 function BetterContracts:onSetMissionInfo(missionInfo, missionDynamicInfo)
-	PlowMission.REWARD_PER_HA = 2900 	-- tweak plow reward (#137)
-
-	self:updateGeneration()
 end
 function BetterContracts:onPostLoadMap(mapNode, mapFile)
 	-- handle our config and optional settings
@@ -927,7 +921,18 @@ function BetterContracts:onPostLoadMap(mapNode, mapFile)
 	BaleMission.FILL_SUCCESS_FACTOR = self.config.toDeliverBale 
 
 	-- init mission generation settings
-	BetterContracts:updateGenerationSettings()
+	self.genContracts = {}  	-- avoid generation if genContracts[type] is false
+	local types = g_missionManager.missionTypes
+	for i = 1, #types do
+		self.genContracts[g_missionManager:getMissionTypeById(i).name] = true
+	end
+	self.canHarvest = {			-- allow generation if canHarvest[variant] is true
+		GRAIN = true,
+		ROOTCROP = true,
+		VEGETABLES = true,
+		GREEN = true,
+	}  		
+	self:updateGenerationSettings()
 
 	-- initialize constants depending on game manager instances
 	self.isMultiplayer = g_currentMission.missionDynamicInfo.isMultiplayer
@@ -959,6 +964,8 @@ function BetterContracts:onPostLoadMap(mapNode, mapFile)
 	self.initialized = true
 end
 function BetterContracts:onStartMission()
+	PlowMission.REWARD_PER_HA = 2900 	-- tweak plow reward (#137)
+
 	-- set up fruit specific rewards/ha for harvest:
 	local data = g_missionManager:getMissionTypeDataByName(HarvestMission.NAME)
 	data.rewardPerFruitHa = {
@@ -977,25 +984,19 @@ function BetterContracts:onStartMission()
 	-- check mission vehicles
 	self:validateMissionVehicles()
 
-	-- Reduce # of active supplyTransport missions:
-	if self.supply then  
-		local data = g_missionManager:getMissionTypeDataByName("supplyTransportMission")
-		debugPrint("[BC] reducing maxNumInstances for SupplyTransport contracts from %s to 2", 
-			data and data.maxNumInstances or "data nil")
-		if data then data.maxNumInstances = 2 end
-	end
 	-- patch for bug in KommunalServices:
 	if self.kommunal then  
 		self.genContracts.kommunalMission = true
-		local data = g_missionManager:getMissionTypeDataByName("kommunalMission")
-		data.maxNumInstances = 2
 	end
 	-- reduce maxNum for non-field missions, ExtendedMissionInfo sets all to 8:
 	if self.extendedInfo then  
-		for _,name in ipairs({"treeTransportMission","deadwoodMission","destructibleRockMission"}) do
+		for _,name in ipairs({"treeTransportMission","deadwoodMission",
+		 "destructibleRockMission","kommunalMission","supplyTransportMission","woodChipsMission"}) do
 			local data = g_missionManager:getMissionTypeDataByName(name)
-			debugPrint("** %s num Instances is %d, max set to 2", name, data.numInstances)
-			data.maxNumInstances = 2
+			if data then
+				debugPrint("[BC] %s num Instances is %d, max set to 2", name, data.numInstances)
+				data.maxNumInstances = 2
+			end
 		end
 	end
 end

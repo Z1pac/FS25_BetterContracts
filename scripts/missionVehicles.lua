@@ -14,6 +14,8 @@
 --							 fruit name for sow/harvest in contr list
 --							 enable hardMode
 --  v1.3.0.5 	07.01.2026	hotfix MissionStartEvent.run() set vec group before m:start()
+--  v1.3.0.6 	04.03.2026	add getFarmlandDiscount() public API #172, 
+--							fix getGroups for late registered mod mission types #174
 --=======================================================================================================
 
 ---------------------- mission vehicle loading functions --------------------------------------------
@@ -592,7 +594,14 @@ function getGroups(m)
 			end)
 		end
 	end
+	if not BetterContracts.config.debug then  
+		return groups
+	end
+
 	local seen = BetterContracts.vehicleSelect.seenGroup
+	if seen[typeName] == nil then  -- mod mission type was registered later
+		seen[typeName] = {small=false, medium=false, large=false}
+	end
 	if (not seen[typeName][size]) or (variant~=nil and not seen[typeName][size][variant]) then
 		if variant ~= nil then  
 			seen[typeName][size] = {}

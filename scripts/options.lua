@@ -8,6 +8,7 @@
 --  v1.0.0.0    28.10.2024  1st port to FS25
 --  v1.1.0.0    08.01.2025  UI settings page, discount mode
 --  v1.2.0.0    12.05.2025  New: leased vehicle selection dialog (startContract())
+--  v1.3.0.6 	22.02.2026	add getFarmlandDiscount() public API #172
 --=======================================================================================================
 
 --------------------- lazyNPC --------------------------------------------------------------------------- 
@@ -529,30 +530,8 @@ function AbstractFieldMission:getNPC()
 		local npcIndex = self.field.farmland.npcIndex
 		return g_npcManager:getNPCByIndex(npcIndex)
 end
-function getDiscountPrice(farmland)
-	-- returns discount as delta and percent-text
-	local discPerJob = BetterContracts.config.discPerJob
-	local delta = 0
-	local noFarm = g_i18n:getText("ui_noFarm")  	-- pas de ferme
-	local words = noFarm:split(" ")					
-	local k = noFarm:find(words[#words])			--        ^ 
-	local disct = noFarm:sub(1,k-1) 				-- pas de
 
-	local farm =  g_farmManager:getFarmById(g_localPlayer.farmId)
-	local jobs = farm.stats.npcJobs or {}
-	local count = jobs[farmland.npcIndex] or 0
-	local disJobs = math.min(count, BetterContracts.config.discMaxJobs,
-		math.floor(0.5 / discPerJob))
-
-	if disJobs > 0 then
-		delta = farmland.price * disJobs * discPerJob		
-		disct = string.format("%d%%", 100 *disJobs *discPerJob)
-	end
-	return delta, disct
-end
-
---------------------- public API for other mods --------------------------------------------------------
--- Returns farmland discount data for use by external mods (e.g. UsedPlus, FS25_Financing).
+---- Returns farmland discount data for use by external mods (e.g. UsedPlus, FS25_Financing).
 -- Avoids other mods having to access BetterContracts internals directly.
 -- @param farmland  table      farmland object (from g_farmlandManager)
 -- @param farmId    number|nil farm ID, defaults to g_localPlayer.farmId
@@ -600,16 +579,17 @@ function showContextBox(box, hotspot, description, image, uvs, farmId, farmText,
 
 	-- show npc owner:
 	local npc = g_npcManager:getNPCByIndex(farmland.npcIndex)
-	local delta, disct = getDiscountPrice(farmland)
+	local discount = bc.noDiscount
+	local deltaText = ""
+	local delta, disct = bc:getFarmlandDiscount(farmland)
 
-	local text = string.format("%s: %s %s", npc.title, disct, g_i18n:getText("bc_discount"))
-	bc.my.title.owner:setText(text)
-
-	text = ""
-	if delta > 0 then 
-		text = g_i18n:formatMoney(delta, 0, true)
-	end 
-	bc.my.text.owner:setText(text)
+	if disct > 0 then 
+		discount = string.format("%d%%", disct) 
+		deltaText = g_i18n:formatMoney(delta, 0, true)
+	end
+	bc.my.title.owner:setText(string.format("%s: %s %s", 
+		npc.title, discount, g_i18n:getText("bc_discount")))
+	bc.my.text.owner:setText(deltaText)
 	bc:discountVisible(true)
 
 	-- Todo: if price-delta < player balance < price, we don't get called here. 
@@ -630,18 +610,18 @@ function onClickBuyFarmland(self)
 		then return self:onClickBuy() end
 
 	local discMode = BetterContracts.config.discountMode
-	local price, disct = self.selectedFarmland.price, ""
-	local delta = 0
+	local price, discText = self.selectedFarmland.price, ""
+	local delta, disct = 0, 0
 
 	if discMode then
-		delta, disct = getDiscountPrice(self.selectedFarmland)
+		delta, disct = bc:getFarmlandDiscount(self.selectedFarmland)
 	end
-	if disct ~= "" then 
-		disct = string.format(" (%s %s)", disct, g_i18n:getText("bc_discount")) 
+	if disct > 0 then 
+		discText = string.format(" (%s%% %s)", disct, g_i18n:getText("bc_discount")) 
 	end
 
 	if price - delta <= self.playerFarm:getBalance() then
-		local priceText = g_i18n:formatMoney(price-delta, 0, true,true)..disct 
+		local priceText = g_i18n:formatMoney(price-delta, 0, true,true)..discText 
 		local text = string.format(g_i18n:getText(InGameMenuMapFrame.L10N_SYMBOL.DIALOG_BUY_FARMLAND), priceText)
 		local callback, target, args = self.onYesNoBuyFarmland, self, nil
 
