@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<modDesc descVersion="101">
+<modDesc descVersion="107">
 	<author>Mmtrx</author>
-	<version>1.3.0.6</version>
+	<version>1.3.0.7</version>
 	<title>
 		<en>Better Contracts</en>
 	</title>
@@ -9,52 +9,43 @@
 		<en>
 			<![CDATA[
 
-Changelog v1.3.0.6
-- add getFarmlandDiscount() public API #172
-- allow onion harvest #165
-- allow missions w/o leasing vehicles
-- fix leased vehicle selection ignoring selected at startLeasing
-- fix hard mode in MP #156
-- fix mowBaleMission #154
-- fix penalty bug: was applied even for succcessful missions #142
-- fix hud progress bar, clash with FS25_extendedMissionInfo #136
-- awareness for FS25_AdditionalContracts (possibly fix #146)
-
-Changelog v1.3.0.0
+Changelog v1.3.0.7
 o NEW:
+- leased vehicle selection dialog
 - double progress bars, leased vehicles in active contract display
 - details for chaff mission
 - fruit name for sow/harvest in contracts list
 - enable hard mode
-
-o FIX:
-- leasing when BC is off #129
-- compatibility supplyTransportMission #126,
-- sort menu at 16 x 10 resolution #128
-
-Changelog v1.2.0.4
-- Leased Vehicle Selection: Esc doesn't start contract #107, #113
-- remove fertilize level on finished harvest missions
-- don't set npc to nil when reading farmlands w/o npcIndex #96
-- fix mission vehicles for large fertilizing #91, medium sowing #105
-
-Changelog v1.2.0.2
+- add getFarmlandDiscount() public API #172
+- allow onion harvest #165
+- allow missions w/o leasing vehicles
+- awareness for FS25_AdditionalContracts (possibly fix #146)
 - adjustable small/med/large field size thresholds in userDefined.xml #45
 - increase reward/ha for earth fruit types #71
 - count non-field jobs for discount #80
+- add time left for active contracts on hud #63
+- add mission info to leased vehicle name #65
+
+o FIX:
+- nil error after sorting contracts list with no active contracts
+- leased vehicle selection ignoring selected at startLeasing
+- hard mode in MP #156
+- mowBaleMission #154
+- penalty bug: was applied even for succcessful missions #142
+- hud progress bar, clash with FS25_extendedMissionInfo #136
+- leasing when BC is off #129
+- compatibility supplyTransportMission #126,
+- sort menu at 16 x 10 resolution #128
+- remove fertilize level on finished harvest missions
+- don't set npc to nil when reading farmlands w/o npcIndex #96
+- fix mission vehicles for large fertilizing #91, medium sowing #105
 - remove surplus "progress" text from list #92
 - fix MP vehicle select for vegetable harvest #94
 - remove vehicle warn for supplyTransportMission #98
-
-Changelog v1.1.2.1
-- disable warnings about missing mission vehicle mods #87
 - repair FS25_Financing #78. 
 - fix click on settings/controls #76.
-- add time left for active contracts on hud #63
-- add mission info to leased vehicle name #65
-- New: leased vehicle selection dialog
 
-This version enables following features:
+This mod enables following features:
 
 - clear list of available contracts 
 - generate new contracts 
@@ -67,21 +58,49 @@ This version enables following features:
 - discount mode enabled
 - compatibility with FS25_RefreshContracts, FS25_LimeMission, FS25_ContractBoost, FS25_additionalGameSettings
 
-GitHub link: https://github.com/Mmtrx/FS25_BetterContracts
-I plan to implement additional functions in next releases of the mod.
+To address errors or enhancements, please use 
+GitHub link: https://github.com/Mmtrx/FS25_BetterContracts/issues
 ]]>
 		</en>
 		<de>
 			<![CDATA[
-Changelog v1.1.2.1
-- Warnungen wg fehlender Mission-Fahrzeuge Mods entfernt #87
-- fix für FS25_Financing #78. 
-- fix Klick auf Einstellungen/Steuerung #76.
-- Anzeige verbleibender Zeit im Hud Fortschrittsbalken #63
-- Missionsanzeige beim Fahrzeugnamen #65
-- Neu: Auswahldialog für Leasing-Fahrzeuge bei Verträgen
+Changelog v1.3.0.7
+o NEU:
+- Auswahldialog für Leasing-Fahrzeuge
+- doppelte Fortschrittsbalken
+- Anzeige geleaster Fahrzeuge bei aktiven Aufträgen
+- Details für Häckselaufträge
+- Anzeige der Frucht bei Sä- und Ernteaufträgen 
+- Hard mode auswählbar
+- Ernteaufträge für Zwiebeln #165
+- Aufträge ohne Leasing-Fahrzeuge ermöglicht
+- FS25_AdditionalContracts wird erkannt (#146)
+- Grenzwerte für small/med/large Feldgrößen in userDefined.xml #45
+- Lohn/ha für Erdfrüchte-Ernte erhöht #71
+- Auch Aufträge ohne Feldarbeit zählen für den Rabatt #80
+- Verbleibende Zeit für aktive Aufträge im Hud anzeigen #63
+- Namen der Leasing-Fahrzeuge enthalten zugehörigen Auftrag #65
 
-Diese Version enthält folgende Funktionen:
+o FIX:
+- nil Fehler nach Sortieren der Auftragsliste ohne aktive Aufträge 
+- Auswahl Leasing-Fahrzeuge wurde ignoriert
+- Hard mode in MP Spielen #156
+- Mäh- und Pressaufträge #154
+- Strafzahlung wurde auch auf erfolgreiche Aufträge angewendet #142
+- Hud Fortschrittsanzeige inkompatibel mit FS25_extendedMissionInfo #136
+- Leasing wenn BC Details ausgeschaltet sind #129
+- Kompatibilität mit Liefer- und Transportverträgen #126
+- Sortier-Menu bei 16 x 10 Bildschirmformat #128
+- Düngestufe entfernt nach Abschluss von Ernteaufträgen 
+- NPC darf nicht Null sein, beim Laden von Farmland ohne npcIndex #96
+- Leasing-Fahrzeuge für large Dünge-, medium Sä-Aufträge #91, #105
+- Überflüssigen Text "Fortschritt" entfernt #92
+- Fahrzeugauswahl für Gemüse-Ernte bei MP Spielen #94
+- Warnung entfernt für Liefer- und Transportverträge
+- Kompatibilität mit FS25_Financing #78 
+- Klick auf Einstellungen/Steuerung #76
+
+Diese Mod enthält folgende Funktionen:
 
 - Löschen der Auftragsliste
 - Erzeugen neuer Aufträge
@@ -94,19 +113,47 @@ Diese Version enthält folgende Funktionen:
 - Rabatt-Mode aktiviert
 - Kompatibilität mit FS25_RefreshContracts, FS25_LimeMission, FS25_ContractBoost, FS25_additionalGameSettings 
 
-Weitere Funktionen sind für die Zukunft geplant.
-GitHub link: https://github.com/Mmtrx/FS25_BetterContracts
+Für Fehlermeldungen, Verbesserungswünsche siehe
+ https://github.com/Mmtrx/FS25_BetterContracts/issues
 ]]>
 		</de>
 		<fr>
 			<![CDATA[
-Changelog v1.1.2.1
-- disable warnings about missing mission vehicle mods #87
-- repair FS25_Financing #78. 
-- fix click on settings/controls #76.
-- add time left for active contracts on hud #63
-- add mission info to leased vehicle name #65
-- New: leased vehicle selection dialog
+Changelog v1.3.0.7
+o NOUVEAUTÉS :
+- boîte de dialogue de sélection des véhicules loués
+- double barre de progression, affichage des véhicules loués sous contrat actif
+- détails pour la mission « chaff »
+- nom des fruits pour les semis/récoltes dans la liste des contrats
+- activation du mode difficile
+- ajout de l'API publique getFarmlandDiscount() #172
+- Autorisation de la récolte d'oignons #165
+- Autorisation des missions sans location de véhicules
+- Prise en compte de FS25_AdditionalContracts (correction potentielle du bug #146)
+- Seuils de taille des champs (petit/moyen/grand) ajustables dans userDefined.xml #45
+- Augmentation de la récompense par hectare pour les fruits de terre #71
+- Prise en compte des tâches hors champ pour la remise #80
+- Ajout du temps restant pour les contrats actifs sur l'affichage tête haute (HUD) #63
+- Ajouter les informations de mission au nom du véhicule loué #65
+
+o CORRECTIONS :
+- La sélection du véhicule loué ignore la sélection effectuée lors de startLeasing
+- Mode difficile en multijoueur #156
+- mowBaleMission #154
+- Bug de pénalité : appliquée même pour les missions réussies #142
+- Barre de progression sur l'affichage tête haute (HUD), conflit avec FS25_extendedMissionInfo #136
+- Location lorsque BC est désactivé #129
+- compatibilité supplyTransportMission #126,
+- tri du menu en résolution 16 x 10 #128
+- suppression du niveau de fertilisation sur les missions de récolte terminées
+- ne pas définir le NPC sur nil lors de la lecture des terres agricoles sans NPCIndex #96
+- correction des véhicules de mission pour la fertilisation à grande échelle #91, semis moyen #105
+- suppression du texte « progress » en surplus de la liste #92
+- correction de la sélection de véhicule en multijoueur pour la récolte de légumes #94
+- suppression de l'avertissement sur le véhicule pour supplyTransportMission #98
+- réparation de FS25_Financing #78. 
+- correction du clic sur les paramètres/commandes #76.
+
 
 Cette version permet les fonctionnalités suivantes :
 
@@ -121,9 +168,8 @@ Cette version permet les fonctionnalités suivantes :
 - mode d'escompte activé
 - compatibilité avec FS25_RefreshContracts, FS25_LimeMission, FS25_ContractBoost, FS25_additionalGameSettings
 
-Lien GitHub : https://github.com/Mmtrx/FS25_BetterContracts
-Je prévois d'implémenter des fonctions supplémentaires dans les prochaines versions du mod.
-]]>
+Pour signaler des erreurs ou proposer des améliorations, veuillez utiliser 
+le lien GitHub: https://github.com/Mmtrx/FS25_BetterContracts/issues]]>
 		</fr>
 	</description>
 	<iconFilename>icon_BetterContracts.dds</iconFilename>
@@ -153,10 +199,4 @@ Je prévois d'implémenter des fonctions supplémentaires dans les prochaines ve
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_m" index="1" />
 		</actionBinding>
 	</inputBinding>
-	<!--
-	<storeItems>
-		<storeItem xmlFilename="missionVehicles/sw4014.xml"/>
-		<storeItem xmlFilename="missionVehicles/multipackD14.xml"/>
-	</storeItems>
-	-->
 </modDesc>

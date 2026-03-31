@@ -14,6 +14,8 @@
 --							new settings switches: hideMission, stayNew, finishField 
 --  v1.2.0.0    12.05.2025  New: leased vehicle selection dialog
 --	v1.3.0.1 	18.11.2025	fix hud progress bar clash with FS25_extendedMissionInfo #136
+--  v1.3.0.7 	23.03.2026	modHub: fix nil error after sorting contracts with an empty Active list #39
+-- 									start with debug/ stayNew/ finishField all off
 --=======================================================================================================
 -- calculate real size from pixel value: 140*g_pixelSizeScaledX
 function loadIcons(self)
@@ -434,7 +436,7 @@ function populateCell(self, list, sect, index, cell)
 end
 function sortList(self, superfunc)
 	--[[ sort self.contracts according to sort button clicked:
-		1 "sortcat",  mission category / field (defaut)
+		1 "sortcat",  mission category / field (default)
 		2 "sortrev",  Revenue / contract value
 		3 "sortnpc",  NPC farmer offering mission
 		4 "sortprof", net profit
@@ -526,19 +528,21 @@ function sortList(self, superfunc)
 			table.insert(self.sectionContracts[status][#self.sectionContracts[status]].contracts, contract)
 		end
 	end
-	local numNew = #self.sectionContracts[1]
-	local numActive = #self.sectionContracts[2]
-
-	if numNew > 0 and #self.sectionContracts[1][1].contracts==0 then  
-	-- remove section title if no contracts
-		self.sectionContracts[1] = {}
-		numNew = 0 
+	--check for empty lists:
+	for i = 1,2 do
+		local numSect = #self.sectionContracts[i] 
+		-- could be zero for empty list sorted by Npc
+		if numSect >0 and  #self.sectionContracts[i][1].contracts == 0  then  
+		-- remove section title if no contracts
+			self.sectionContracts[i] = {}
+		end 
 	end
+	--[[ try to auto switch to other list if this one is empty ..
 	if numNew == 0 then
 		if #self.sectionContracts[2] > 0 then
 			self.subCategorySelector:setState(2)
 		end
-	end
+	end]]
 end
 function updateFarmersBox(self, field, npc)
 	local bc = BetterContracts

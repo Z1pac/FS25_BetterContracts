@@ -64,6 +64,11 @@
 --							fix leasing when BC details is off
 --  v1.3.0.6 	22.02.2026	add getFarmlandDiscount() public API #172
 --							fix getGroups for late registered mod mission types #174
+--  v1.3.0.7 	23.03.2026	prevent indexing nil class from AdditionalContracts #175
+--							modHub: fix nil error after sorting contracts with an empty Active list #39
+-- 									start with debug/ stayNew/ finishField all off
+-- 				26.03.2026			fix edge mission limit = 3 dialog swallowed by lease vec selection
+-- 									don't check Vredo DLC wildlife missions for vecs
 --=======================================================================================================
 SC = {
 	FERTILIZER = 1, -- prices index
@@ -433,12 +438,12 @@ function BetterContracts:initialize()
 	if self.initialized ~= nil then return end -- run only once
 	self.initialized = false
 	self.config = {
-		debug = true, 				-- debug mode
+		debug = false, 				-- debug mode
 		ferment = false, 			-- allow insta-fermenting wrapped bales by player
 		forcePlow = false, 			-- force plow after root crop harvest
 		hideMission = false, 		-- hide missions not begun from hud
-		stayNew = true, 			-- don't switch to ACTIVE list when contr accepted
-		finishField = true, 		-- allow 100% field completion after contr finish
+		stayNew = false, 			-- don't switch to ACTIVE list when contr accepted
+		finishField = false, 		-- allow 100% field completion after contr finish
 		maxActive = 3, 				-- max active contracts
 		rewardMultiplier = 1., 		-- general reward multiplier
 		rewardMultiplierMow = 1.,  	-- mow reward multiplier
@@ -647,11 +652,11 @@ function addMission(self, mission)
 				mission.expectedLiters = mission:getMaxCutLiters()
 			end
 			local factor = HarvestMission.SUCCESS_FACTOR
-			if typeName=="chaffMission" then 
+			if typeName=="chaffMission" and bc.chaffMission then 
 				factor = bc.chaffMission.data.ownTable.SUCCESS_FACTOR
-			elseif typeName=="fruitCollectMission" then
+			elseif typeName=="fruitCollectMission" and bc.fruitCollectMission then
 				factor = bc.fruitCollectMission.data.ownTable.SUCCESS_FACTOR
-			elseif typeName=="baleCollectMission" then
+			elseif typeName=="baleCollectMission" and bc.baleCollectMission then
 				factor = bc.baleCollectMission.data.ownTable.SUCCESS_FACTOR
 			end
 			info.keep, info.price, info.profit = bc:calcProfit(mission, factor)
@@ -1212,7 +1217,7 @@ function hasFarmReachedMissionLimit(self,superf,farmId)
 	if maxActive == 0 then return false end 
 
 	MissionManager.MAX_MISSIONS_PER_FARM = maxActive
-	return superf(self, farmId)
+	return superf(self, farmId) -- std: true if #active missions >= 3
 end
 function harvestMissionNew(isServer, superf, isClient, customMt )
 	-- allow mower/ swather to harvest swaths

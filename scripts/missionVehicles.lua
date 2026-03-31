@@ -17,7 +17,13 @@
 --  v1.3.0.6 	04.03.2026	add getFarmlandDiscount() public API #172, 
 --							fix getGroups for late registered mod mission types #174
 --=======================================================================================================
-
+local noVecs = {
+	"supplyTransportMission",
+	"universalMission",
+	"futuresMission",
+	"wildlifeFeederPlacementMission",
+	"wildlifeFeederRefillMission"
+}
 ---------------------- mission vehicle loading functions --------------------------------------------
 function BetterContracts.loadMissionVehicles(missionManager, superFunc, xmlFilename, baseDir)
 	-- overwrites MisionManager:loadVehicleGroups()
@@ -267,15 +273,15 @@ function BetterContracts:validateMissionVehicles()
 	local type 
 	for _,mt in ipairs(g_missionManager.missionTypes) do
 		type = mt.name
-		if type == "supplyTransportMission" or 
-			type == "universalMission" then continue end
+		if table.hasElement(noVecs,type) 
+			then continue end
 		local smallOnly = type == "deadwoodMission" or type == "destructibleRockMission"
 		for _,f in ipairs({"small","medium","large"}) do
 			if smallOnly and f ~= "small" then continue end
 			if g_missionManager.missionVehicles[type] == nil or 
 			 	g_missionManager.missionVehicles[type][f] == nil or 
 				#g_missionManager.missionVehicles[type][f] == 0 then
-					Logging.warning("[%s] No missionVehicles for %s missions on %s fields",
+					debugPrint("[%s] No missionVehicles for %s missions on %s fields",
 					self.name, type, f)
 					ok = false
 				end

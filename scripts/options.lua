@@ -9,6 +9,7 @@
 --  v1.1.0.0    08.01.2025  UI settings page, discount mode
 --  v1.2.0.0    12.05.2025  New: leased vehicle selection dialog (startContract())
 --  v1.3.0.6 	22.02.2026	add getFarmlandDiscount() public API #172
+-- 				26.03.2026	fix edge: mission limit = 3 dialog swallowed by lease vec selection
 --=======================================================================================================
 
 --------------------- lazyNPC --------------------------------------------------------------------------- 
@@ -386,9 +387,12 @@ function startContract(frCon, superf, wantsLease)
 	local jobsChanged = false
 
 	-- overwrite dialog info box
-	if g_missionManager:hasFarmReachedMissionLimit(farmId) 
-		and bc.config.maxActive ~= 3 then
-		InfoDialog.show(g_i18n:getText("bc_enoughMissions"))
+	if g_missionManager:hasFarmReachedMissionLimit(farmId) then
+		if bc.config.maxActive ~= 3 then
+			InfoDialog.show(g_i18n:getText("bc_enoughMissions"))
+		else
+			InfoDialog.show(g_i18n:getText("contract_limitedReached"), nil, nil, DialogElement.TYPE_WARNING)
+		end
 		return
 	end
 	-- (hardMode) --
