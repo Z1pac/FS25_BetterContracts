@@ -16,6 +16,7 @@
 --  v1.3.0.5 	07.01.2026	hotfix MissionStartEvent.run() set vec group before m:start()
 --  v1.3.0.6 	04.03.2026	add getFarmlandDiscount() public API #172, 
 --							fix getGroups for late registered mod mission types #174
+--  v1.3.0.8 	07.05.2026	check for empty vec group in abstractInit() #194 
 --=======================================================================================================
 local noVecs = {
 	"supplyTransportMission",
@@ -552,7 +553,8 @@ function(self, superf, connection)
 		g_messageCenter:publish(MissionStartEvent, self.startState, self.spawnVehicles)
 	else
 		debugPrint("[BC] MissionStartEvent.run on server, %s %s, jobsLeft: %s", 
-			self.spawnVehicles and "leased group" or "no leasing", self.vehicleGroup or "",
+			self.spawnVehicles and "leased group" or "no leasing", 
+			self.vehicleGroup or self.vehicleGroupIdentifier,
 			self.jobsLeft)
 		local userId = g_currentMission.userManager:getUserIdByConnection(connection)
 		if g_currentMission:getHasPlayerPermission("manageContracts", connection, g_farmManager:getFarmByUserId(userId).farmId) then
@@ -564,7 +566,7 @@ function(self, superf, connection)
 				g_server:broadcastEvent(ChangeJobsEvent.new(self.farmId, self.jobsLeft),
 						not g_currentMission.missionDynamicInfo.isMultiplayer)
 			end
-			if bc.isOn and self.spawnVehicles then 
+			if self.spawnVehicles and bc.isOn and bc.config.vecSelect then 
 				-- set the mission vehicles on the server
 				local m = self.mission
 				local ix = self.vehicleGroup
@@ -627,7 +629,7 @@ function abstractInit(self)
 	self.vehicleGroupIdentifier = 1  -- default, if no mission vehicles
 	local g, _ = self:getVehicleGroup()
 
-	if g == nil then return true end  -- mission has no vehicles
+	if g == nil or #g == 0 then return true end  -- mission has no vehicles
 	
 	self.groups = getGroups(self)
 	g = table.getRandomElement(self.groups)

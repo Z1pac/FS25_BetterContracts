@@ -10,6 +10,7 @@
 --  v1.2.0.0    12.05.2025  New: leased vehicle selection dialog (startContract())
 --  v1.3.0.6 	22.02.2026	add getFarmlandDiscount() public API #172
 -- 				26.03.2026	fix edge: mission limit = 3 dialog swallowed by lease vec selection
+--  v1.3.0.8 	30.04.2026	make vehicle select optional #190. 
 --=======================================================================================================
 
 --------------------- lazyNPC --------------------------------------------------------------------------- 
@@ -167,6 +168,113 @@ function farmRead(self, streamId)
 		jobs[npcIndex] = streamReadUInt8(streamId)
 		debugPrint("  jobs[%d] = %d (farm %d)", npcIndex, jobs[npcIndex],self.farmId)
 	end
+end
+function startContract(frCon, superf, wantsLease)
+	-- overwrites InGameMenuContractsFrame:startContract()
+	local bc = BetterContracts
+	local farmId = g_currentMission:getFarmId()
+	local farm = g_farmManager:getFarmById(farmId)
+	local jobsChanged = false
+
+	-- overwrite dialog info box
+	if g_missionManager:hasFarmReachedMissionLimit(farmId) then
+		if bc.config.maxActive ~= 3 then
+			InfoDialog.show(g_i18n:getText("bc_enoughMissions"))
+		else
+			InfoDialog.show(g_i18n:getText("contract_limitedReached"), nil, nil, DialogElement.TYPE_WARNING)
+		end
+		return
+	end
+	-- (hardMode) --
+	if bc.config.hardMode then 
+		if wantsLease then 
+		-- check if enough jobs complete to allow lease
+			local contract = frCon:getSelectedContract()
+			local npc = contract.mission:getNPC()
+			local jobs = 0
+			if farm.stats.npcJobs ~= nil and farm.stats.npcJobs[npc.index] ~= nil then 
+				jobs = farm.stats.npcJobs[npc.index]
+			end
+			if jobs < bc.config.hardLease then
+				InfoDialog.show(string.format(g_i18n:getText("bc_leaseNotEnough"),
+						bc.config.hardLease - jobs, npc.title))
+				return
+			end
+		end
+		if bc.config.hardLimit > -1 then
+		-- check available monthly jobs limit
+			if farm.stats.jobsLeft == -1 then  	-- hardLimit was set during this game
+				farm.stats.jobsLeft = bc.config.hardLimit
+			end
+			if farm.stats.jobsLeft == 0 then 
+				InfoDialog.show(g_i18n:getText("bc_monthlyLimit"))
+				return
+			else
+				farm.stats.jobsLeft = farm.stats.jobsLeft -1
+				-- need to sync this to server, in mission start event 
+				jobsChanged = true
+			end
+		end
+	end
+	local m = frCon:getSelectedContract().mission
+
+	-- lease vehicle selection
+	if wantsLease and bc.isOn and bc.config.vecSelect then
+	 -- show vehicle selector list:
+		bc.vehicleSelect:init(m)
+		g_gui:showDialog("VehicleSelect")  -- if yes button, start leasing mission
+		
+	elseif jobsChanged then
+		sendMissionStart(m,nil,farm.stats.jobsLeft,wantsLease)
+	else
+		superf(frCon, wantsLease)  		-- sends base game start evt, no vecGroup 
+	end
+end
+function startFromConversation(self, superf)
+	-- overwrites ConversationActionStartSelectedMission:run()
+	local bc = BetterContracts
+	if not bc.isOn then return superf(self) end
+
+	if g_server == nil then
+		return true
+	end
+	local npc = self.conversation:getNPC()
+	if npc == nil then
+		Logging.error("ConversationActionStartSelectedMission.run: No NPC set!")
+		return false
+	end
+	local player = npc:getInteractingPlayer()
+	if player == nil then
+		Logging.error("ConversationActionStartSelectedMission.run: No player set!")
+		return false
+	end
+	local farm = g_farmManager:getFarmByUserId(player.userId)
+	if farm == nil then
+		Logging.error("ConversationActionStartSelectedMission.run: Player has no farm!")
+		return false
+	end
+	local farmId = farm:getId()
+	if farmId == FarmManager.SPECTATOR_FARM_ID or farmId == FarmManager.INVALID_FARM_ID then
+		Logging.error("ConversationActionStartSelectedMission.run: Player has invalid farm id!")
+		return false
+	end
+	local lease = npc:getInputData(ConversationInputLeaseVehicles.NAME)
+	if lease == nil then lease = false
+	end
+	local mission = npc:getInputData(ConversationInputSelectedMission.NAME)
+	if mission == nil then
+		Logging.error("ConversationActionStartSelectedMission.run: No mission selected!")
+		return false
+	end
+
+	if lease and bc.isOn then
+	 -- show vehicle selector list:
+		bc.vehicleSelect:init(mission)
+		g_gui:showDialog("VehicleSelect")  -- if yes button, start leasing mission
+	else
+		g_client:getServerConnection():sendEvent(MissionStartEvent.new(mission, farmId, lease))
+	end
+	return true
 end
 BCFinish = {
 	"none","success","failed","timed out","cancelled"
@@ -378,113 +486,6 @@ end
 function getTotalReward(self, superf)
 	-- overwrites AbstractMission:getTotalReward()
 	return superf(self) - self:getPenalty()
-end
-function startContract(frCon, superf, wantsLease)
-	-- overwrites InGameMenuContractsFrame:startContract()
-	local bc = BetterContracts
-	local farmId = g_currentMission:getFarmId()
-	local farm = g_farmManager:getFarmById(farmId)
-	local jobsChanged = false
-
-	-- overwrite dialog info box
-	if g_missionManager:hasFarmReachedMissionLimit(farmId) then
-		if bc.config.maxActive ~= 3 then
-			InfoDialog.show(g_i18n:getText("bc_enoughMissions"))
-		else
-			InfoDialog.show(g_i18n:getText("contract_limitedReached"), nil, nil, DialogElement.TYPE_WARNING)
-		end
-		return
-	end
-	-- (hardMode) --
-	if bc.config.hardMode then 
-		if wantsLease then 
-		-- check if enough jobs complete to allow lease
-			local contract = frCon:getSelectedContract()
-			local npc = contract.mission:getNPC()
-			local jobs = 0
-			if farm.stats.npcJobs ~= nil and farm.stats.npcJobs[npc.index] ~= nil then 
-				jobs = farm.stats.npcJobs[npc.index]
-			end
-			if jobs < bc.config.hardLease then
-				InfoDialog.show(string.format(g_i18n:getText("bc_leaseNotEnough"),
-						bc.config.hardLease - jobs, npc.title))
-				return
-			end
-		end
-		if bc.config.hardLimit > -1 then
-		-- check available monthly jobs limit
-			if farm.stats.jobsLeft == -1 then  	-- hardLimit was set during this game
-				farm.stats.jobsLeft = bc.config.hardLimit
-			end
-			if farm.stats.jobsLeft == 0 then 
-				InfoDialog.show(g_i18n:getText("bc_monthlyLimit"))
-				return
-			else
-				farm.stats.jobsLeft = farm.stats.jobsLeft -1
-				-- need to sync this to server, in mission start event 
-				jobsChanged = true
-			end
-		end
-	end
-	local m = frCon:getSelectedContract().mission
-
-	-- lease vehicle selection
-	if wantsLease and bc.isOn then
-	 -- show vehicle selector list:
-		bc.vehicleSelect:init(m)
-		g_gui:showDialog("VehicleSelect")  -- if yes button, start leasing mission
-		
-	elseif jobsChanged then
-		sendMissionStart(m,nil,farm.stats.jobsLeft,wantsLease)
-	else
-		superf(frCon, wantsLease)  		-- sends base game start evt, no vecGroup 
-	end
-end
-function startFromConversation(self, superf)
-	-- overwrites ConversationActionStartSelectedMission:run()
-	local bc = BetterContracts
-	if not bc.isOn then return superf(self) end
-
-	if g_server == nil then
-		return true
-	end
-	local npc = self.conversation:getNPC()
-	if npc == nil then
-		Logging.error("ConversationActionStartSelectedMission.run: No NPC set!")
-		return false
-	end
-	local player = npc:getInteractingPlayer()
-	if player == nil then
-		Logging.error("ConversationActionStartSelectedMission.run: No player set!")
-		return false
-	end
-	local farm = g_farmManager:getFarmByUserId(player.userId)
-	if farm == nil then
-		Logging.error("ConversationActionStartSelectedMission.run: Player has no farm!")
-		return false
-	end
-	local farmId = farm:getId()
-	if farmId == FarmManager.SPECTATOR_FARM_ID or farmId == FarmManager.INVALID_FARM_ID then
-		Logging.error("ConversationActionStartSelectedMission.run: Player has invalid farm id!")
-		return false
-	end
-	local lease = npc:getInputData(ConversationInputLeaseVehicles.NAME)
-	if lease == nil then lease = false
-	end
-	local mission = npc:getInputData(ConversationInputSelectedMission.NAME)
-	if mission == nil then
-		Logging.error("ConversationActionStartSelectedMission.run: No mission selected!")
-		return false
-	end
-
-	if lease and bc.isOn then
-	 -- show vehicle selector list:
-		bc.vehicleSelect:init(mission)
-		g_gui:showDialog("VehicleSelect")  -- if yes button, start leasing mission
-	else
-		g_client:getServerConnection():sendEvent(MissionStartEvent.new(mission, farmId, lease))
-	end
-	return true
 end
 function BetterContracts:resetJobsLeft()
 	-- recalc jobs left per farm

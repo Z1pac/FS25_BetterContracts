@@ -169,7 +169,7 @@ function initGui(self)
 
 	self.frCon.contractBox:applyProfile("BC_contractsContractBox")
 	local desc = self.frCon.contractBox:getDescendants(function(elem)
-		return elem.text == g_i18n:getText("ui_contractsInfo"):upper()
+		return elem.profile == "fs25_contractsContractInfoTitle"
 		end)
 	if desc[1] then  
 		desc[1]:applyProfile("BC_contractsContractInfoTitle")

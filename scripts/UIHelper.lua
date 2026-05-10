@@ -275,7 +275,7 @@ function UIHelper.registerFocusControls(page, controls)
 			end
 		end
 		-- Invalidate the layout in order to relink items properly
-		page.settingsLayout:invalidateLayout()
+		-- already done in createControlsDynamically()
 	end)
 end
 function UIHelper.setupAutoBindControls(owningTable, targetTable, updateFunc)

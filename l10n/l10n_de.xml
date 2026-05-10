@@ -11,6 +11,10 @@
 =======================================================================================================-->
 <l10n>
 	<texts>
+		<!-- updates v1.3.0.8 -->
+		<text name="bc_vecSelect" text="Maschinen-Auswahl" />
+		<text name="bc_vecSelect_tooltip" text="Maschinen-Auswahldialog zeigen bei Annahme eines Vertrags mit Leihgeräten." />
+
 		<!-- updates v1.3.0.5 
 		- add onions to text:
 		<text name="bc_genVegetable_tooltip" text="Generate harvest contracts for carrots, beetroot, parsnip, and onions" />

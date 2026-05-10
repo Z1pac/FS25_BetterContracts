@@ -6,6 +6,7 @@
 -- Changelog:
 --  v1.0.0.0    28.10.2024  1st port to FS25 
 --  v1.1.0.0    03.01.2025  new UI settings page
+--  v1.3.0.8 	30.04.2026	make vehicle select optional #190. 
 --=======================================================================================================
 -- Define the UI controls. For bool values, supply just the name, for ranges, supply min, max 
 -- and step, and for choices, supply a values table
@@ -28,6 +29,7 @@ ControlProperties = {
     { name = "hideMission", autoBind = true },
     { name = "stayNew", autoBind = true },
     { name = "finishField", autoBind = true },
+    { name = "vecSelect", autoBind = true },
     { name = "debug", autoBind = true },
 
 	{title = "bc_discountModeTitle"},

@@ -69,6 +69,9 @@
 -- 									start with debug/ stayNew/ finishField all off
 -- 				26.03.2026			fix edge mission limit = 3 dialog swallowed by lease vec selection
 -- 									don't check Vredo DLC wildlife missions for vecs
+--  v1.3.0.8 	30.04.2026	make vehicle select optional #190 
+-- 							Remove invalidateLayout from UIHelper.registerFocusControls #188
+-- 							check for empty vec group in abstractInit() #194
 --=======================================================================================================
 SC = {
 	FERTILIZER = 1, -- prices index
@@ -162,6 +165,7 @@ function registerXML(self)
 	self.baseXmlKey = "BetterContracts"
 	self.xmlSchema = XMLSchema.new(self.baseXmlKey)
 	self.xmlSchema:register(XMLValueType.BOOL, self.baseXmlKey.."#debug")
+	self.xmlSchema:register(XMLValueType.BOOL, self.baseXmlKey.."#vecSelect")
 	self.xmlSchema:register(XMLValueType.BOOL, self.baseXmlKey.."#ferment")
 	self.xmlSchema:register(XMLValueType.BOOL, self.baseXmlKey.."#forcePlow")
 	self.xmlSchema:register(XMLValueType.BOOL, self.baseXmlKey.."#hideMission")
@@ -220,6 +224,7 @@ function readconfig(self)
 		local key = self.baseXmlKey
 
 		self.config.debug =		xmlFile:getValue(key.."#debug", false)			
+		self.config.vecSelect =	xmlFile:getValue(key.."#vecSelect", true)			
 		self.config.ferment =	xmlFile:getValue(key.."#ferment", false)			
 		self.config.forcePlow =	xmlFile:getValue(key.."#forcePlow", false)			
 		self.config.hideMission = xmlFile:getValue(key.."#hideMission", false)	
@@ -439,6 +444,7 @@ function BetterContracts:initialize()
 	self.initialized = false
 	self.config = {
 		debug = false, 				-- debug mode
+		vecSelect = true, 			-- use vehicle selection dialog
 		ferment = false, 			-- allow insta-fermenting wrapped bales by player
 		forcePlow = false, 			-- force plow after root crop harvest
 		hideMission = false, 		-- hide missions not begun from hud
@@ -1106,6 +1112,7 @@ function saveSavegame()
 	local conf = self.config
 	local key = self.baseXmlKey 
 	xmlFile:setBool ( key.."#debug", 		  conf.debug)
+	xmlFile:setBool ( key.."#vecSelect", 	  conf.vecSelect)
 	xmlFile:setBool ( key.."#ferment", 		  conf.ferment)
 	xmlFile:setBool ( key.."#forcePlow", 	  conf.forcePlow)
 	xmlFile:setBool ( key.."#hideMission", 	  conf.hideMission)

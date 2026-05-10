@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <l10n>
 	<texts>
+		<!-- updates v1.3.0.8 -->
+		<text name="bc_vecSelect" text="Vehicle Selection" />
+		<text name="bc_vecSelect_tooltip" text="Use vehicle selection dialog when borrowing equipment for a contract." />
 		<!-- updates v1.3.0.5 
 		- add onions to text:
 		<text name="bc_genVegetable_tooltip" text="Generate harvest contracts for carrots, beetroot, parsnip, and onions" />
