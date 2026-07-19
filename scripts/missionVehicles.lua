@@ -467,8 +467,8 @@ function(self, connection)
 	-- a new client connected. Inform them about active mission vehicles
 	for _, m in ipairs(g_missionManager.missions) do
 		if m.sendLeasedVecs then 
-			debugPrint("* onConnectionFinishedLoading %s %s, vehicles: %d", m:getTitle(), 
-				m.field:getName(), #m.vehicles)
+			debugPrint("* onConnectionFinishedLoading %s %s, vehicles: %d", m:getTitle(),
+				m.field and m.field:getName() or "", #m.vehicles)
 			checkMissionVecs(m, connection)		
 		end
 	end
