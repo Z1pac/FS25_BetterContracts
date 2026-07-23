@@ -17,13 +17,22 @@
 --  v1.3.0.6 	04.03.2026	add getFarmlandDiscount() public API #172, 
 --							fix getGroups for late registered mod mission types #174
 --  v1.3.0.8 	07.05.2026	check for empty vec group in abstractInit() #194 
+--  v1.3.0.9 	22.07.2026	fix potential prob pr #205
+--  						add mod mission types w/o leasing
 --=======================================================================================================
 local noVecs = {
 	"supplyTransportMission",
 	"universalMission",
 	"futuresMission",
 	"wildlifeFeederPlacementMission",
-	"wildlifeFeederRefillMission"
+	"wildlifeFeederRefillMission",
+	"productionSupply", 				-- FS25_Longtermcontracts
+	"palletDeliveryMission", 			-- FS25_Pallet_delivery_contracts
+	"extendedJobsCraneLift", 			-- FS25_ExtendedJobsCraneLift
+	"extendedJobsLawn", 				-- FS25_ExtendedJobsLawn
+	"extendedJobsTow", 					-- FS25_ExtendedJobsTow
+	"scrapHunterMission", 				-- FS25_scrapSpawner
+	"scrapTransportMission", 			-- FS25_scrapSpawner
 }
 ---------------------- mission vehicle loading functions --------------------------------------------
 function BetterContracts.loadMissionVehicles(missionManager, superFunc, xmlFilename, baseDir)

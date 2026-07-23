@@ -9,7 +9,10 @@
 		<en>
 			<![CDATA[
 
-Changelog v1.3.0.8
+Changelog v1.3.0.9
+- updaet PL, RU l10n #196, 199
+- Fix potential problem PR #205.
+- reduce maxNumInstances for non-field missions
 - make vehicle select optional #190
 - Remove invalidateLayout from UIHelper.registerFocusControls #188
 

@@ -72,6 +72,8 @@
 --  v1.3.0.8 	30.04.2026	make vehicle select optional #190 
 -- 							Remove invalidateLayout from UIHelper.registerFocusControls #188
 -- 							check for empty vec group in abstractInit() #194
+--  v1.3.0.9 	22.07.2026	updt PL, RU l10n #196, 199. Fix potential prob pr #205.
+-- 							reduce maxNumInstances for non-field missions
 --=======================================================================================================
 SC = {
 	FERTILIZER = 1, -- prices index
@@ -79,7 +81,7 @@ SC = {
 	HERBICIDE = 3,
 	SEEDS = 4,
 	LIME = 5,
-	-- my mission cats:
+ -- my mission cats:
 	HARVEST = 1,
 	SPREAD = 2,
 	SIMPLE = 3,
@@ -87,26 +89,26 @@ SC = {
 	TRANSP = 5,
 	SUPPLY = 6,
 	OTHER = 7,
-	-- refresh MP:
+ -- refresh MP:
 	ADMIN = 1,
 	FARMMANAGER = 2,
 	PLAYER = 3,
-	-- hardMode expire:
+ -- hardMode expire:
 	OFF = 0,
 	DAY = 1,
 	MONTH = 2,
-	-- Gui farmerBox controls:
-	CONTROLS = {
+
+	CONTROLS = {	-- Gui farmerBox controls
 		container = "container",
 		mTable = "mTable",
 		mToggle = "mToggle",
 	},
-	-- Gui contractBox controls:
-	CONTBOX = {
+ 
+	CONTBOX = {	-- Gui contractBox controls:
 		"detailsList", "rewardText"
 	},
-	-- Gui progressBox controls:
-	PROGBOX = {
+	
+	PROGBOX = {	-- Gui progressBox controls:
 		"bcProgressBars", "prog1", "prog2",
 		"progressBarBg", "progressBar1", "progressBar2",
 		"bcVehicleTemplate", "vehiclesBox"
@@ -115,6 +117,7 @@ SC = {
 		"harvestMission","mowbaleMission","chaffMission","fruitCollectMission",
 		"baleCollectMission",
 	},
+	MAXINSTANCE_NONFIELD = 3,
 }
 function debugPrint(text, ...)
 	if BetterContracts.config and BetterContracts.config.debug then
@@ -933,10 +936,6 @@ function BetterContracts:onPostLoadMap(mapNode, mapFile)
 
 	-- init mission generation settings
 	self.genContracts = {}  	-- avoid generation if genContracts[type] is false
-	local types = g_missionManager.missionTypes
-	for i = 1, #types do
-		self.genContracts[g_missionManager:getMissionTypeById(i).name] = true
-	end
 	self.canHarvest = {			-- allow generation if canHarvest[variant] is true
 		GRAIN = true,
 		ROOTCROP = true,
@@ -992,24 +991,32 @@ function BetterContracts:onStartMission()
 		[FruitType.PEA] = 			3400,
 		[FruitType.SPINACH] = 		3400,
 	}
-	-- check mission vehicles
-	self:validateMissionVehicles()
+	-- init mission generation settings
+	local types = g_missionManager.missionTypes -- mod types should be registered by now
+	local type
+	for i = 1, #types do
+		type = g_missionManager:getMissionTypeById(i)
+		self.genContracts[type.name] = true
 
-	-- patch for bug in KommunalServices:
-	if self.kommunal then  
-		self.genContracts.kommunalMission = true
-	end
-	-- reduce maxNum for non-field missions, ExtendedMissionInfo sets all to 8:
-	if self.extendedInfo then  
-		for _,name in ipairs({"treeTransportMission","deadwoodMission",
-		 "destructibleRockMission","kommunalMission","supplyTransportMission","woodChipsMission"}) do
-			local data = g_missionManager:getMissionTypeDataByName(name)
-			if data then
-				debugPrint("[BC] %s num Instances is %d, max set to 2", name, data.numInstances)
-				data.maxNumInstances = 2
+		-- skip field mission types:
+		if type.classObject.setField ~= nil then continue end
+		
+		-- reduce maxNum for non-field missions, ExtendedMissionInfo sets all to 8:
+		-- ipairs({"treeTransportMission","deadwoodMission",
+		-- "destructibleRockMission","kommunalMission","supplyTransportMission","woodChipsMission"}) do
+		local data = type.data
+		if data then
+			local maxOld = data.maxNumInstances
+			local maxNew = math.min(maxOld,SC.MAXINSTANCE_NONFIELD)
+			if maxNew ~= maxOld then
+				data.maxNumInstances = maxNew
+				debugPrint("[BC] %s max num instances was %d, set to %d", type.name, 
+				maxOld, maxNew)
 			end
 		end
 	end
+	-- check mission vehicles
+	self:validateMissionVehicles()
 end
 function BetterContracts:onWriteStream(streamId)
 	-- write settings to a client when it joins
