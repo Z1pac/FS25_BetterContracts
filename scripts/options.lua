@@ -11,6 +11,7 @@
 --  v1.3.0.6 	22.02.2026	add getFarmlandDiscount() public API #172
 -- 				26.03.2026	fix edge: mission limit = 3 dialog swallowed by lease vec selection
 --  v1.3.0.8 	30.04.2026	make vehicle select optional #190. 
+--	v1.3.1.0 	27.07.2026	apply canceled mission penalty in hard mode #198
 --=======================================================================================================
 
 --------------------- lazyNPC --------------------------------------------------------------------------- 
@@ -463,7 +464,8 @@ end
 --------------------- hard mode ------------------------------------------------------------------------- 
 function AbstractMission:getPenalty()
 	-- calc penalty for canceled field mission
-	if BetterContracts.config.hardMode and self.status==MissionStatus.FINISHED 
+	if BetterContracts.config.hardMode and 
+		(self.status==MissionStatus.FINISHED or self.status==MissionStatus.DISMISSED) 
 		and self.finishState ~= MissionFinishState.SUCCESS then
 		return self:getReward() * BetterContracts.config.hardPenalty 
 	end

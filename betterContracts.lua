@@ -74,6 +74,8 @@
 -- 							check for empty vec group in abstractInit() #194
 --  v1.3.0.9 	22.07.2026	updt PL, RU l10n #196, 199. Fix potential prob pr #205.
 -- 							reduce maxNumInstances for non-field missions
+--  v1.3.1.0 	27.07.2026	fix contract exclusion #208. fix log msg getFilltypePrice #207
+-- 							apply canceled mission penalty in hard mode #198
 --=======================================================================================================
 SC = {
 	FERTILIZER = 1, -- prices index
@@ -610,8 +612,10 @@ function BetterContracts:getFilltypePrice(m)
 	if m.sellingStation.fillTypePrices[FillType.SILAGE] then
 		return m.sellingStation:getEffectiveFillTypePrice(FillType.SILAGE)
 	end
+
 	Logging.warning("[%s]:addMission(): sellingStation %s has no price for fillType %s.", 
-		self.name, m.sellingStation:getName(), self.ft[m.fillType].title)
+		self.name, m.sellingStation:getName(), 
+		self.ft[fillType] and self.ft[fillType].title or "unknown")
 	return 0
 end
 function BetterContracts:calcProfit(m, successFactor)
@@ -942,7 +946,12 @@ function BetterContracts:onPostLoadMap(mapNode, mapFile)
 		VEGETABLES = true,
 		GREEN = true,
 	}  		
-	self:updateGenerationSettings()
+	-- adjust max missions
+	local fieldsAmount = table.size(g_fieldManager.fields)
+	local adjustedFieldsAmount = math.max(fieldsAmount, 45)
+	MissionManager.MAX_MISSIONS = math.min(80, math.ceil(adjustedFieldsAmount * 0.60)) -- max missions = 60% of fields amount (minimum 45 fields) max 120
+	debugPrint("[%s] Fields amount %s (%s)", self.name, fieldsAmount, adjustedFieldsAmount)
+	debugPrint("[%s] MAX_MISSIONS set to %s", self.name, MissionManager.MAX_MISSIONS)
 
 	-- initialize constants depending on game manager instances
 	self.isMultiplayer = g_currentMission.missionDynamicInfo.isMultiplayer
@@ -1015,8 +1024,8 @@ function BetterContracts:onStartMission()
 			end
 		end
 	end
-	-- check mission vehicles
-	self:validateMissionVehicles()
+	self:updateGeneration() 		-- upd contract exclusions
+	self:validateMissionVehicles()	-- check mission vehicles
 end
 function BetterContracts:onWriteStream(streamId)
 	-- write settings to a client when it joins
@@ -1066,7 +1075,6 @@ function BetterContracts:onUpdate(dt)
 		end 
 	end
 end
-
 function BetterContracts:updateGeneration()
 	-- set Mission generation rate (std is 6 min)
 	MissionManager.MISSION_GENERATION_INTERVAL = self.config.generationInterval * 360000
@@ -1080,16 +1088,6 @@ function BetterContracts:updateGeneration()
 	self.canHarvest.GREEN = self.config.genGreen
 	self.canHarvest.VEGETABLES = self.config.genVegetable
 	self.canHarvest.ROOT = self.config.genRoot
-end
-function BetterContracts:updateGenerationSettings()
-	self:updateGeneration()
-
-	-- adjust max missions
-	local fieldsAmount = table.size(g_fieldManager.fields)
-	local adjustedFieldsAmount = math.max(fieldsAmount, 45)
-	MissionManager.MAX_MISSIONS = math.min(80, math.ceil(adjustedFieldsAmount * 0.60)) -- max missions = 60% of fields amount (minimum 45 fields) max 120
-	debugPrint("[%s] Fields amount %s (%s)", self.name, fieldsAmount, adjustedFieldsAmount)
-	debugPrint("[%s] MAX_MISSIONS set to %s", self.name, MissionManager.MAX_MISSIONS)
 end
 function saveSavegame()
 	-- save our settings
