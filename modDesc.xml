@@ -10,6 +10,10 @@
 			<![CDATA[
 
 Changelog v1.3.1.0
+- apply canceled mission penalty in hard mode #198
+- fix contract exclusion #208. 
+- fix log msg getFilltypePrice #207
+- update PL, RU l10n #196, 199
 - Fix potential problem PR #205.
 - reduce maxNumInstances for non-field missions
 - make vehicle select optional #190
